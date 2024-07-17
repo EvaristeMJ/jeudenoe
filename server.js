@@ -33,6 +33,7 @@ wss.on('connection', (ws) => {
     });
 });
 
+// Serve static files from the 'public' directory
 app.use(express.static('public'));
 
 server.listen(3000, () => {

@@ -47,7 +47,11 @@ function displayMessage(message) {
     chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
 }
 
-
+function handleReady(){
+    const readyButton = document.getElementById('ready');
+    readyButton.disabled = true;
+    socket.send(JSON.stringify({ type: 'ready' }));
+}
 
 function displayUsers(users) {
     const usersContainer = document.getElementById('users');

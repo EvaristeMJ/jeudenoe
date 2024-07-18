@@ -18,9 +18,10 @@ wss.on('connection', (ws) => {
     }
 
     ws.on('message', (message) => {
+        console.log("Received message from client:", message);
         clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(message);
+                client.send(JSON.stringify(JSON.parse(message)));
             }
         });
     });
@@ -33,7 +34,6 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Serve static files from the 'public' directory
 app.use(express.static('public'));
 
 server.listen(3000, () => {

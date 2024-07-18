@@ -1,4 +1,3 @@
-// script.js
 document.addEventListener("DOMContentLoaded", () => {
     const cells = document.querySelectorAll(".cell");
     const statusDisplay = document.getElementById("status");
@@ -11,28 +10,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const socket = new WebSocket('ws://localhost:3000');
 
-    socket.addEventListener('message', (event) => {
-        const message = JSON.parse(event.data);
+    socket.addEventListener('open', () => {
+        console.log("Connected to the server");
+    });
 
-        switch (message.type) {
-            case 'start':
-                gameActive = true;
-                playerSymbol = message.player;
-                currentPlayer = 'X';
-                statusDisplay.innerHTML = playerSymbol === 'X' ? "It's your turn" : "Waiting for opponent";
-                break;
-            case 'move':
-                gameState[message.index] = message.player;
-                cells[message.index].innerHTML = message.player;
-                currentPlayer = message.player === 'X' ? 'O' : 'X';
-                statusDisplay.innerHTML = currentPlayer === playerSymbol ? "It's your turn" : "Waiting for opponent";
-                handleResultValidation();
-                break;
-            case 'disconnect':
-                gameActive = false;
-                statusDisplay.innerHTML = 'Opponent disconnected';
-                break;
+    socket.addEventListener('message', (event) => {
+        const message = event.data;
+        console.log("Received message:", message);
+        try {
+            const parsedMessage = JSON.parse(message);
+            switch (parsedMessage.type) {
+                case 'start':
+                    gameActive = true;
+                    playerSymbol = parsedMessage.player;
+                    currentPlayer = 'X';
+                    statusDisplay.innerHTML = playerSymbol === 'X' ? "It's your turn" : "Waiting for opponent";
+                    break;
+                case 'move':
+                    gameState[parsedMessage.index] = parsedMessage.player;
+                    cells[parsedMessage.index].innerHTML = parsedMessage.player;
+                    statusDisplay.innerHTML = currentPlayer === playerSymbol ? "It's your turn" : "Waiting for opponent";
+                    handleResultValidation();
+                    break;
+                case 'disconnect':
+                    gameActive = false;
+                    statusDisplay.innerHTML = 'Opponent disconnected';
+                    break;
+            }
+        } catch (e) {
+            console.error("Failed to parse message", e);
         }
+    });
+
+    socket.addEventListener('close', () => {
+        console.log("Disconnected from the server");
     });
 
     const winningConditions = [
@@ -54,11 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
         gameState[clickedCellIndex] = currentPlayer;
         clickedCell.innerHTML = currentPlayer;
         socket.send(JSON.stringify({ type: 'move', index: clickedCellIndex, player: currentPlayer }));
-    }
-
-    function handlePlayerChange() {
-        currentPlayer = currentPlayer === "X" ? "O" : "X";
-        statusDisplay.innerHTML = currentPlayerTurn();
     }
 
     function handleResultValidation() {
@@ -89,8 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
             gameActive = false;
             return;
         }
-
-        handlePlayerChange();
+        if (currentPlayer === 'X'){
+            currentPlayer = 'O';
+        }
+        else{
+            currentPlayer = 'X';
+        }
     }
 
     function handleCellClick(clickedCellEvent) {
@@ -109,10 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
         gameActive = true;
         currentPlayer = "X";
         gameState = ["", "", "", "", "", "", "", "", ""];
-        statusDisplay.innerHTML = currentPlayerTurn();
         cells.forEach(cell => cell.innerHTML = "");
+        statusDisplay.innerHTML = currentPlayerTurn();
+        socket.send(JSON.stringify({ type: 'restart' }));
     }
 
-    cells.forEach(cell => cell.addEventListener("click", handleCellClick));
-    restartButton.addEventListener("click", handleRestartGame);
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    restartButton.addEventListener('click', handleRestartGame);
 });

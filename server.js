@@ -9,29 +9,50 @@ const wss = new WebSocket.Server({ server });
 let clients = [];
 
 wss.on('connection', (ws) => {
-    clients.push(ws);
-
-    if (clients.length === 2) {
-        clients.forEach((client, index) => {
-            client.send(JSON.stringify({ type: 'start', player: index === 0 ? 'X' : 'O' }));
-        });
-    }
+    let user = null;
 
     ws.on('message', (message) => {
-        console.log("Received message from client:", message);
-        clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(JSON.parse(message)));
-            }
-        });
+        const parsedMessage = JSON.parse(message);
+        
+        if (!user && parsedMessage.type === 'setPseudo') {
+            user = {
+                ws: ws,
+                pseudo: parsedMessage.pseudo
+            };
+            clients.push(user);
+            console.log(`User connected with pseudonym: ${user.pseudo}`);
+            broadcastUserList();
+        } else if (user) {
+            console.log(`Received message from ${user.pseudo}: ${parsedMessage.message}`);
+            clients.forEach((client) => {
+                if (client.ws !== ws && client.ws.readyState === WebSocket.OPEN) {
+                    client.ws.send(JSON.stringify({
+                        type: 'message',
+                        pseudo: user.pseudo,
+                        message: parsedMessage.message
+                    }));
+                }
+            });
+        }
     });
 
     ws.on('close', () => {
-        clients = clients.filter(client => client !== ws);
-        clients.forEach((client) => {
-            client.send(JSON.stringify({ type: 'disconnect' }));
-        });
+        clients = clients.filter(client => client.ws !== ws);
+        console.log(`User disconnected: ${user ? user.pseudo : 'unknown'}`);
+        broadcastUserList();
     });
+
+    function broadcastUserList() {
+        const userList = clients.map(client => client.pseudo);
+        clients.forEach((client) => {
+            if (client.ws.readyState === WebSocket.OPEN) {
+                client.ws.send(JSON.stringify({
+                    type: 'userList',
+                    users: userList
+                }));
+            }
+        });
+    }
 });
 
 app.use(express.static('public'));

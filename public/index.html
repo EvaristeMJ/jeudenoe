@@ -2,12 +2,51 @@
 <html>
 <head>
     <title>WebSocket Hub</title>
-    <style src="styles.css"></style>
+    <style>
+        #users {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border: 1px solid black;
+            border-radius: 50%;
+            margin: 20px auto;
+        }
+        .user {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        #chat {
+            width: 50%;
+            margin: 20px auto;
+            border: 1px solid black;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            float: left;
+        }
+        #message-box {
+            justify-content: center;
+            display: flex;
+            width: 50%;
+            margin-top: 10px;
+            float: left;
+        }
+        #message-box input {
+            flex: 1;
+            padding: 5px;
+        }
+        #message-box button {
+            padding: 5px 10px;
+        }
+    </style>
 </head>
 <body>
     <div id="users"></div>
-    <input type="text" id="message" placeholder="Type a message">
-    <button onclick="sendMessage()">Send</button>
+    <div id="chat"></div>
+    <div id="message-box">
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

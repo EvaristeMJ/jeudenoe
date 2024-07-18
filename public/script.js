@@ -10,18 +10,44 @@ socket.addEventListener('message', function (event) {
     if (message.type === 'userList') {
         displayUsers(message.users);
     } else if (message.type === 'message') {
-        console.log(`${message.pseudo}: ${message.message}`);
+        displayMessage(`${message.pseudo}: ${message.message}`);
     } else if (message.type === 'disconnect') {
-        console.log(`${message.pseudo} has disconnected`);
+        displayMessage(`${message.pseudo} has disconnected`);
     }
 });
-
+document.getElementById('message').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
 function sendMessage() {
     const messageInput = document.getElementById('message');
     const message = messageInput.value;
     socket.send(JSON.stringify({ type: 'message', message: message }));
     messageInput.value = '';
+    displayMessage(`You: ${message}`);
 }
+
+let messages = [];
+
+function displayMessage(message) {
+    messages.push(message);
+    if (messages.length > 20) {
+        messages.shift(); // Remove the oldest message if there are more than 20
+    }
+
+    const chatContainer = document.getElementById('chat');
+    chatContainer.innerHTML = ''; // Clear the chat container
+    messages.forEach((msg) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = msg;
+        chatContainer.appendChild(messageDiv);
+    });
+
+    chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to the bottom
+}
+
+
 
 function displayUsers(users) {
     const usersContainer = document.getElementById('users');

@@ -1,16 +1,5 @@
 /* styles.css */
-#users {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    border: 0px solid black;
-    border-radius: 50%;
-    margin: 20px auto;
-}
-.user {
-    position: absolute;
-    transform: translate(-50%, -50%);
-}
+
 body {
     font-family: Arial, sans-serif;
     display: flex;

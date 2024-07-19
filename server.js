@@ -20,7 +20,10 @@ wss.on('connection', (ws) => {
             user = {
                 ws: ws,
                 pseudo: parsedMessage.pseudo,
-                ready: false
+                ready: false,
+                alive: true,
+                left: null,
+                right: null
             };
             clients.push(user);
             console.log(`User connected with pseudonym: ${user.pseudo}`);
@@ -46,7 +49,6 @@ wss.on('connection', (ws) => {
                             message: 'Game starting...'
                         }));
                         client.ws.send(JSON.stringify({type: 'start'}));
-
                     }
                 });
             }

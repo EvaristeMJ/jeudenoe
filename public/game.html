@@ -15,6 +15,10 @@
             position: absolute;
             transform: translate(-50%, -50%);
         }
+        #users button {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
         #chat {
             width: 50%;
             margin: 20px auto;
@@ -46,12 +50,17 @@
     </style>
 </head>
 <body>
-    <div id="users"></div>
+    <div id="users">
+        <button attackRight>Attack</button>
+        <button attackLeft>Attack</button>
+    </div>
     <div id="chat"></div>
     <div id="message-box">
         <input type="text" id="message" placeholder="Type a message">
         <button onclick="sendMessage()">Send</button>
     </div>
     <script src="script.js"></script>
+    <script src="game.js"></script>
+
 </body>
 </html>

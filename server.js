@@ -9,6 +9,7 @@ const wss = new WebSocket.Server({ server });
 
 let clients = [];
 let n_ready = 0;
+let indices = [10,9,8,7,6,5,4,3,2,1];
 
 wss.on('connection', (ws) => {
     let user = null;
@@ -20,6 +21,7 @@ wss.on('connection', (ws) => {
             user = {
                 ws: ws,
                 pseudo: parsedMessage.pseudo,
+                index: indices.pop(),
                 ready: false,
                 alive: true,
                 left: null,
@@ -70,6 +72,7 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         clients = clients.filter(client => client.ws !== ws);
         console.log(`User disconnected: ${user ? user.pseudo : 'unknown'}`);
+        indices.push(user.index);
         broadcastUserList();
     });
 

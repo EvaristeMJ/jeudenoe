@@ -13,6 +13,12 @@ socket.addEventListener('message', function (event) {
         displayMessage(`${message.pseudo}: ${message.message}`);
     } else if (message.type === 'disconnect') {
         displayMessage(`${message.pseudo} has disconnected`);
+    } else if (message.type === 'start') {
+        handleMove(message);
+    } else if (message.type === 'move') {
+        handleMove(message);
+    } else if (message.type === 'turn') {
+        handleTurn(message);
     }
 });
 document.getElementById('message').addEventListener('keydown', function(event) {
@@ -73,4 +79,12 @@ function displayUsers(users) {
 
         usersContainer.appendChild(userDiv);
     });
+    function handleTurn(message){
+    }
+    function handleStart(message){
+        socket.send(JSON.stringify({ type: 'start' }));
+    }
+    function handleMove(message){
+        socket.send(JSON.stringify({ type: 'move' }));
+    }
 }

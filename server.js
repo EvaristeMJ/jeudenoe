@@ -8,8 +8,6 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let clients = [];
-let n_ready = 0;
-let indices = [10,9,8,7,6,5,4,3,2,1];
 
 wss.on('connection', (ws) => {
     let user = null;
@@ -18,14 +16,19 @@ wss.on('connection', (ws) => {
         const parsedMessage = JSON.parse(message);
         
         if (!user && parsedMessage.type === 'setPseudo') {
+
             user = {
                 ws: ws,
                 pseudo: parsedMessage.pseudo,
-                index: indices.pop(),
                 ready: false,
                 alive: true,
                 left: null,
-                right: null
+                right: null,
+                life: 100,
+                attack: 0,
+                defense: 0,
+                sattack: 0,
+                sdefense: 0
             };
             clients.push(user);
             console.log(`User connected with pseudonym: ${user.pseudo}`);
@@ -44,7 +47,9 @@ wss.on('connection', (ws) => {
             });
             if (clients.length > 1 && clients.every(client => client.ready)) {
                 clients.forEach((client) => {
+                    startGame()
                     if (client.ws.readyState === WebSocket.OPEN) {
+
                         client.ws.send(JSON.stringify({
                             type: 'message',
                             pseudo: 'Server',
@@ -72,9 +77,30 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         clients = clients.filter(client => client.ws !== ws);
         console.log(`User disconnected: ${user ? user.pseudo : 'unknown'}`);
-        indices.push(user.index);
         broadcastUserList();
     });
+    function startGame() {
+        // order clients randomly
+        clients.sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < clients.length; i++) {
+            clients[i].life = randomLife();
+            clients[i].attack = randomInt();
+            clients[i].defense = randomInt();
+            clients[i].sattack = randomInt();
+            clients[i].sdefense = randomInt();
+            clients[i].alive = true;
+            clients[i].left = clients[(i - 1) % clients.length];
+            clients[i].right = clients[(i + 1) % clients.length];
+        }
+    }
+
+    function randomInt(){
+        return Math.floor(Math.random() * 13)+1;
+    }
+    function randomLife(){
+        return randomInt()+randomInt()+randomInt();
+    }
 
     function broadcastUserList() {
         const userList = clients.map(client => client.pseudo);
@@ -88,6 +114,7 @@ wss.on('connection', (ws) => {
         });
     }
 });
+
 
 app.use(express.static('public'));
 

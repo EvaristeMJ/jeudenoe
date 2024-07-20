@@ -3,8 +3,8 @@ let active = false;
 let game = false;
 
 socket.addEventListener('open', function (event) {
-    const pseudo = prompt('Enter your pseudonym:');
-    socket.send(JSON.stringify({ type: 'setPseudo', pseudo: pseudo }));
+    //const pseudo = prompt('Enter your pseudonym:');
+    socket.send(JSON.stringify({ type: 'setPseudo', pseudo: Math.floor(5*Math.random()).toString(36) }));
 });
 
 socket.addEventListener('message', function (event) {
@@ -17,10 +17,11 @@ socket.addEventListener('message', function (event) {
         displayMessage(`${message.pseudo} has disconnected`);
     } else if (message.type === 'start') {
         game = true;
-    } else if (message.type === 'move') {
-        handleMove(message);
-    } else if (message.type === 'turn') {
-        handleTurn(message);
+    } else if (message.type === 'startTurn') {
+        active = true;
+    }
+    else if (message.type === 'endTurn') {
+        active = false;
     }
 });
 document.getElementById('message').addEventListener('keydown', function(event) {
@@ -86,22 +87,30 @@ function displayUsers(users) {
             const defenseDiv = document.createElement('div');
             defenseDiv.textContent = `Defense: ${user.defense}`;
             userDiv.appendChild(defenseDiv);
+            // display button to change defense points on each user
+            const defenseButton = document.createElement('button');
+            defenseButton.textContent = 'D';
+            defenseButton.onclick = () => {
+                socket.send(JSON.stringify({ type: 'changeDefense', pseudo: user.pseudo }));
+            };
         }
 
         usersContainer.appendChild(userDiv);
     });
 
 }
-function handleTurn(message){
-    active = true;
-}
 
 function attackRight(){
+    if (!active){
+        console.log('not active');
+        return;
+    }
     socket.send(JSON.stringify({ type: 'attackRight' }));
 }
 function attackLeft(){
+    if (!active){
+        console.log('not active');
+        return;
+    }
     socket.send(JSON.stringify({ type: 'attackLeft' }));
-}
-function handleMove(message){
-    socket.send(JSON.stringify({ type: 'move' }));
 }

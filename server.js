@@ -61,6 +61,33 @@ wss.on('connection', (ws) => {
                 
             }
         }
+        else if (parsedMessage.type === 'changeDefense'){
+            // get the target client with their pseudo
+            const target = clients.find(client => client.pseudo === parsedMessage.pseudo);
+            changeDefense(target);
+            broadcastUserList();
+            endTurn(user)
+        }
+        else if (parsedMessage.type === 'chargeAttack'){
+            handleChargeAttack(user);
+            broadcastUserList();
+            endTurn(user)
+        }
+        else if (parsedMessage.type === 'chargeDefense'){
+            handleChargeDefense(user);
+            broadcastUserList();
+            endTurn(user)
+        }
+        else if (parsedMessage.type === 'attackRight'){
+            handleAttack(user,user.right);
+            broadcastUserList();
+            endTurn(user);
+        }
+        else if (parsedMessage.type === 'attackLeft'){
+            handleAttack(user,user.left);
+            broadcastUserList();
+            endTurn(user);
+        }
         else if (user) {
             console.log(`Received message from ${user.pseudo}: ${parsedMessage.message}`);
             clients.forEach((client) => {
@@ -91,12 +118,15 @@ wss.on('connection', (ws) => {
             clients[i].ncharge = 0;
             clients[i].charge_defense = 0;
             clients[i].alive = true;
-            clients[i].left = clients[(i - 1) % clients.length];
-            clients[i].right = clients[(i + 1) % clients.length];
+            clients[i].left = clients[(i + 1) % clients.length];
+            clients[i].right = clients[(i - 1) % clients.length];
         }
         // select a random player to start the game
         const first_player = clients[Math.floor(Math.random() * clients.length)];
         first_player.ws.send(JSON.stringify({type: 'startTurn'}));
+        for (let i = 0; i < clients.length; i++) {
+            clients[i].ws.send(JSON.stringify({type: 'message', pseudo: 'Server', message: `${first_player.pseudo} starts`}));
+        }
         broadcastUserList();
 
     }
@@ -112,6 +142,9 @@ wss.on('connection', (ws) => {
         next_player = client.right;
         next_player.charge_defense = 0;
         broadcastUserList();
+        for (let i = 0; i < clients.length; i++) {
+            clients[i].ws.send(JSON.stringify({type: 'message', pseudo: 'Server', message: `${next_player.pseudo} begins his turn`}));
+        }
         next_player.ws.send(JSON.stringify({type: 'startTurn'}));
     }
     function handleAttack(client,target){

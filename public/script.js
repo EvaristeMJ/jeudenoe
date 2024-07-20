@@ -1,4 +1,6 @@
 const socket = new WebSocket('ws://localhost:3000');
+let active = false;
+let game = false;
 
 socket.addEventListener('open', function (event) {
     const pseudo = prompt('Enter your pseudonym:');
@@ -14,7 +16,7 @@ socket.addEventListener('message', function (event) {
     } else if (message.type === 'disconnect') {
         displayMessage(`${message.pseudo} has disconnected`);
     } else if (message.type === 'start') {
-        handleMove(message);
+        game = true;
     } else if (message.type === 'move') {
         handleMove(message);
     } else if (message.type === 'turn') {
@@ -75,16 +77,31 @@ function displayUsers(users) {
         userDiv.classList.add('user');
         userDiv.style.left = `${x}px`;
         userDiv.style.top = `${y}px`;
-        userDiv.textContent = user;
+        userDiv.textContent = user.pseudo;
+        if (game){
+            // display life points and defense points
+            const lifeDiv = document.createElement('div');
+            lifeDiv.textContent = `Life: ${user.life}`;
+            userDiv.appendChild(lifeDiv);
+            const defenseDiv = document.createElement('div');
+            defenseDiv.textContent = `Defense: ${user.defense}`;
+            userDiv.appendChild(defenseDiv);
+        }
 
         usersContainer.appendChild(userDiv);
     });
-    function handleTurn(message){
-    }
-    function handleStart(message){
-        socket.send(JSON.stringify({ type: 'start' }));
-    }
-    function handleMove(message){
-        socket.send(JSON.stringify({ type: 'move' }));
-    }
+
+}
+function handleTurn(message){
+    active = true;
+}
+
+function attackRight(){
+    socket.send(JSON.stringify({ type: 'attackRight' }));
+}
+function attackLeft(){
+    socket.send(JSON.stringify({ type: 'attackLeft' }));
+}
+function handleMove(message){
+    socket.send(JSON.stringify({ type: 'move' }));
 }

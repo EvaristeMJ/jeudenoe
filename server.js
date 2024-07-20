@@ -24,7 +24,7 @@ wss.on('connection', (ws) => {
                 alive: true,
                 left: null,
                 right: null,
-                life: 100,
+                life: 0,
                 attack: 0,
                 defense: 0,
                 sattack: 0,
@@ -47,9 +47,7 @@ wss.on('connection', (ws) => {
             });
             if (clients.length > 1 && clients.every(client => client.ready)) {
                 clients.forEach((client) => {
-                    startGame()
                     if (client.ws.readyState === WebSocket.OPEN) {
-
                         client.ws.send(JSON.stringify({
                             type: 'message',
                             pseudo: 'Server',
@@ -58,6 +56,9 @@ wss.on('connection', (ws) => {
                         client.ws.send(JSON.stringify({type: 'start'}));
                     }
                 });
+                startGame();
+                console.log(clients[0].life);
+                broadcastUserList();
             }
         }
         else if (user) {
@@ -85,10 +86,10 @@ wss.on('connection', (ws) => {
 
         for (let i = 0; i < clients.length; i++) {
             clients[i].life = randomLife();
-            clients[i].attack = randomInt();
+            clients[i].attack = 0;
             clients[i].defense = randomInt();
-            clients[i].sattack = randomInt();
-            clients[i].sdefense = randomInt();
+            clients[i].sattack = 0;
+            clients[i].sdefense = 0;
             clients[i].alive = true;
             clients[i].left = clients[(i - 1) % clients.length];
             clients[i].right = clients[(i + 1) % clients.length];
@@ -103,7 +104,14 @@ wss.on('connection', (ws) => {
     }
 
     function broadcastUserList() {
-        const userList = clients.map(client => client.pseudo);
+                // send the list of users with their life points and their defense points to all clients
+        const userList = clients.map(client => {
+                    return {
+                        pseudo: client.pseudo,
+                        life: client.life,
+                        defense: client.defense
+                    };
+                });
         clients.forEach((client) => {
             if (client.ws.readyState === WebSocket.OPEN) {
                 client.ws.send(JSON.stringify({

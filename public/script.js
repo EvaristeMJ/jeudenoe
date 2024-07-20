@@ -89,10 +89,35 @@ function displayUsers(users) {
             userDiv.appendChild(defenseDiv);
             // display button to change defense points on each user
             const defenseButton = document.createElement('button');
-            defenseButton.textContent = 'D';
-            defenseButton.onclick = () => {
+            defenseButton.textContent = 'Change Defense';
+            defenseButton.addEventListener('click', () => {
                 socket.send(JSON.stringify({ type: 'changeDefense', pseudo: user.pseudo }));
-            };
+            });
+            userDiv.appendChild(defenseButton);
+            // display the number of charge attack by iterating a symbol for each charge
+            const chargeAttackDiv = document.createElement('div');
+            chargeAttackDiv.textContent = '';
+            for (let i = 0; i < user.charge_attack; i++){
+                chargeAttackDiv.textContent += '⚡';
+            }
+            userDiv.appendChild(chargeAttackDiv);
+            // display the number of charge defense
+            const chargeDefenseDiv = document.createElement('div');
+            chargeDefenseDiv.textContent = '';
+            if (user.has_charge_defense){
+                chargeDefenseDiv.textContent = '🛡️';
+            }
+            userDiv.appendChild(chargeDefenseDiv);
+            // button to charge attack
+            const chargeAttackButton = document.createElement('button');
+            chargeAttackButton.textContent = 'Charge Attack';
+            chargeAttackButton.addEventListener('click', chargeAttack);
+            userDiv.appendChild(chargeAttackButton);
+            // button to charge defense
+            const chargeDefenseButton = document.createElement('button');
+            chargeDefenseButton.textContent = 'Charge Defense';
+            chargeDefenseButton.addEventListener('click', ()=> chargeDefense(user.pseudo));
+            userDiv.appendChild(chargeDefenseButton);
         }
 
         usersContainer.appendChild(userDiv);
@@ -114,3 +139,18 @@ function attackLeft(){
     }
     socket.send(JSON.stringify({ type: 'attackLeft' }));
 }
+function chargeAttack(){
+    if (!active){
+        console.log('not active');
+        return;
+    }
+    socket.send(JSON.stringify({ type: 'chargeAttack' }));
+}
+function chargeDefense(target){
+    if (!active){
+        console.log('not active');
+        return;
+    }
+    socket.send(JSON.stringify({ type: 'chargeDefense' , pseudo: target.pseudo}));
+}
+

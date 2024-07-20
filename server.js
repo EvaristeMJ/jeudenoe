@@ -14,6 +14,9 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (message) => {
         const parsedMessage = JSON.parse(message);
+        user = clients.find(client => client.ws === ws);
+        if (user === undefined) {
+            user = null;}
         
         if (!user && parsedMessage.type === 'setPseudo') {
 
@@ -35,6 +38,7 @@ wss.on('connection', (ws) => {
             console.log(`User connected with pseudonym: ${user.pseudo}`);
             broadcastUserList();
         } else if (parsedMessage.type === 'ready') {
+
             console.log(`${user.pseudo} is ready`);
             user.ready = true;
             clients.forEach((client) => {
@@ -63,7 +67,7 @@ wss.on('connection', (ws) => {
         }
         else if (parsedMessage.type === 'changeDefense'){
             // get the target client with their pseudo
-            const target = clients.find(client => client.pseudo === parsedMessage.pseudo);
+            target = clients.find(client => client.pseudo === parsedMessage.pseudo);
             changeDefense(target);
             broadcastUserList();
             endTurn(user)
@@ -74,6 +78,7 @@ wss.on('connection', (ws) => {
             endTurn(user)
         }
         else if (parsedMessage.type === 'chargeDefense'){
+            target = clients.find(client => client.pseudo === parsedMessage.pseudo);
             handleChargeDefense(user);
             broadcastUserList();
             endTurn(user)
@@ -107,9 +112,16 @@ wss.on('connection', (ws) => {
         console.log(`User disconnected: ${user ? user.pseudo : 'unknown'}`);
         broadcastUserList();
     });
+    function mod(i){
+        temp = i % clients.length;
+        if(temp < 0){
+            temp = temp + clients.length;
+        }
+        return temp;
+    }
     function startGame() {
         // order clients randomly
-        clients.sort(() => Math.random() - 0.5);
+        //clients.sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < clients.length; i++) {
             clients[i].life = randomLife();
@@ -118,8 +130,8 @@ wss.on('connection', (ws) => {
             clients[i].ncharge = 0;
             clients[i].charge_defense = 0;
             clients[i].alive = true;
-            clients[i].left = clients[(i + 1) % clients.length];
-            clients[i].right = clients[(i - 1) % clients.length];
+            clients[i].left = clients[mod(i + 1)];
+            clients[i].right = clients[mod(i - 1)];
         }
         // select a random player to start the game
         const first_player = clients[Math.floor(Math.random() * clients.length)];
@@ -129,6 +141,10 @@ wss.on('connection', (ws) => {
         }
         broadcastUserList();
 
+    }
+
+    function getClientByPseudo(pseudo){
+        return clients.find(client => client.pseudo === pseudo);
     }
 
     function randomInt(){

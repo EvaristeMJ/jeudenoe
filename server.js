@@ -113,7 +113,7 @@ wss.on('connection', (ws) => {
         broadcastUserList();
     });
     function mod(i){
-        temp = i % clients.length;
+        temp = (i) % clients.length;
         if(temp < 0){
             temp = temp + clients.length;
         }
@@ -172,8 +172,10 @@ wss.on('connection', (ws) => {
                 handleDeath(target);
             }
             target.charge_attack = 0;
+            target.ncharge = 0;
         }
         client.charge_attack = 0;
+        //console.log(`${client.pseudo} attacks ${target.pseudo} with ${a-d} damage`);
     }
     function handleChargeAttack(client){
         if (client.ncharge < 3){

@@ -27,8 +27,9 @@ wss.on('connection', (ws) => {
                 life: 0,
                 attack: 0,
                 defense: 0,
-                sattack: 0,
-                sdefense: 0
+                charge_attack: 0,
+                ncharge: 0,
+                charge_defense: 0
             };
             clients.push(user);
             console.log(`User connected with pseudonym: ${user.pseudo}`);
@@ -57,8 +58,7 @@ wss.on('connection', (ws) => {
                     }
                 });
                 startGame();
-                console.log(clients[0].life);
-                broadcastUserList();
+                
             }
         }
         else if (user) {
@@ -86,14 +86,19 @@ wss.on('connection', (ws) => {
 
         for (let i = 0; i < clients.length; i++) {
             clients[i].life = randomLife();
-            clients[i].attack = 0;
             clients[i].defense = randomInt();
-            clients[i].sattack = 0;
-            clients[i].sdefense = 0;
+            clients[i].charge_attack = 0;
+            clients[i].ncharge = 0;
+            clients[i].charge_defense = 0;
             clients[i].alive = true;
             clients[i].left = clients[(i - 1) % clients.length];
             clients[i].right = clients[(i + 1) % clients.length];
         }
+        // select a random player to start the game
+        const first_player = clients[Math.floor(Math.random() * clients.length)];
+        first_player.ws.send(JSON.stringify({type: 'startTurn'}));
+        broadcastUserList();
+
     }
 
     function randomInt(){
@@ -102,6 +107,56 @@ wss.on('connection', (ws) => {
     function randomLife(){
         return randomInt()+randomInt()+randomInt();
     }
+    function endTurn(client){
+        client.ws.send(JSON.stringify({type: 'endTurn'}));
+        next_player = client.right;
+        next_player.charge_defense = 0;
+        broadcastUserList();
+        next_player.ws.send(JSON.stringify({type: 'startTurn'}));
+    }
+    function handleAttack(client,target){
+        a = randomInt()+client.charge_attack;
+        d = target.defense+target.charge_defense;
+        if(a>d){
+            target.life -= a-d;
+            if(!isAlive(target)){
+                handleDeath(target);
+            }
+            target.charge_attack = 0;
+        }
+        client.charge_attack = 0;
+    }
+    function handleChargeAttack(client){
+        if (client.ncharge < 3){
+            client.charge_attack += randomInt();
+            client.ncharge++;
+        }
+    }
+    function handleChargeDefense(client){
+        client.charge_defense += randomInt();
+    }
+    function changeDefense(target){
+        target.defense = randomInt();
+    }
+    function isAlive(client){
+        return client.life > 0;
+    }
+    function handleDeath(client){
+        client.alive = false;
+        client.left.right = client.right;
+        client.right.left = client.left;
+        if(clients.filter(client => client.alive).length == 1){
+            clients.forEach((client) => {
+                if (client.ws.readyState === WebSocket.OPEN) {
+                    client.ws.send(JSON.stringify({
+                        type: 'message',
+                        pseudo: 'Server',
+                        message: `${clients.filter(client => client.alive)[0].pseudo} wins`
+                    }));
+                }
+            });
+        }
+    }
 
     function broadcastUserList() {
                 // send the list of users with their life points and their defense points to all clients
@@ -109,7 +164,9 @@ wss.on('connection', (ws) => {
                     return {
                         pseudo: client.pseudo,
                         life: client.life,
-                        defense: client.defense
+                        defense: client.defense,
+                        ncharge: client.ncharge,
+                        has_charge_defense: client.charge_defense > 0
                     };
                 });
         clients.forEach((client) => {

@@ -80,7 +80,15 @@ function displayUsers(users) {
         userDiv.classList.add('user');
         userDiv.style.left = `${x}px`;
         userDiv.style.top = `${y}px`;
-        userDiv.textContent = user.pseudo;
+        // bold for the player
+        
+        if(user.pseudo === pseudo){
+            userDiv.innerHTML = `<strong>${user.pseudo}</strong>`;
+        }
+        else{
+            userDiv.textContent = user.pseudo;
+        }
+
         if (game){
             // display life points and defense points
             const lifeDiv = document.createElement('div');

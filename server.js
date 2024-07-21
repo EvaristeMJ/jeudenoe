@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+let active_player_index = 0;
 let clients = [];
 
 wss.on('connection', (ws) => {
@@ -66,30 +67,36 @@ wss.on('connection', (ws) => {
         }
         else if (parsedMessage.type === 'changeDefense'){
             // get the target client with their pseudo
-            target = clients.find(client => client.pseudo === parsedMessage.pseudo);
-            changeDefense(target);
-            broadcastUserList();
-            endTurn(user)
+            if(checkActivePlayer(user))
+                {target = clients.find(client => client.pseudo === parsedMessage.pseudo);
+                changeDefense(target);
+                broadcastUserList();
+                endTurn(user)
+            }
         }
         else if (parsedMessage.type === 'chargeAttack'){
-            handleChargeAttack(user);
-            broadcastUserList();
-            endTurn(user)
+            if(checkActivePlayer(user)){
+                handleChargeAttack(user);
+                broadcastUserList();
+                endTurn(user)}
         }
         else if (parsedMessage.type === 'chargeDefense'){
-            handleChargeDefense(user);
+            if(checkActivePlayer(user))
+            {handleChargeDefense(user);
             broadcastUserList();
-            endTurn(user)
+            endTurn(user)}
         }
         else if (parsedMessage.type === 'attackRight'){
-            handleAttack(user,user.right);
+            if(checkActivePlayer(user))
+            {handleAttack(user,user.right);
             broadcastUserList();
-            endTurn(user);
+            endTurn(user);}
         }
         else if (parsedMessage.type === 'attackLeft'){
-            handleAttack(user,user.left);
+            if(checkActivePlayer(user))
+            {handleAttack(user,user.left);
             broadcastUserList();
-            endTurn(user);
+            endTurn(user);}
         }
         else if (parsedMessage.type === 'message') {
             console.log(`Received message from ${user.pseudo}: ${parsedMessage.message}`);
@@ -117,6 +124,9 @@ wss.on('connection', (ws) => {
         }
         return temp;
     }
+    function checkActivePlayer(user){
+        return clients[active_player_index].ws === user.ws;
+    }
     function startGame() {
         // order clients randomly
         //clients.sort(() => Math.random() - 0.5);
@@ -132,7 +142,9 @@ wss.on('connection', (ws) => {
             clients[i].right = clients[mod(i - 1)];
         }
         // select a random player to start the game
-        const first_player = clients[Math.floor(Math.random() * clients.length)];
+        
+        active_player_index = Math.floor(Math.random() * clients.length);
+        const first_player = clients[active_player_index];
         first_player.ws.send(JSON.stringify({type: 'startTurn'}));
         for (let i = 0; i < clients.length; i++) {
             clients[i].ws.send(JSON.stringify({type: 'message', pseudo: 'Server', message: `${first_player.pseudo} starts`}));
@@ -153,10 +165,9 @@ wss.on('connection', (ws) => {
     }
     function endTurn(client){
         client.ws.send(JSON.stringify({type: 'endTurn'}));
-        next_player = client.right;
+        active_player_index = mod(active_player_index + 1);
+        next_player = clients[active_player_index]
         next_player.charge_defense = 0;
-        console.log('active player index:' + next_player.index)
-        active_player_index = (active_player_index + 1) % clients.length;
         broadcastUserList();
         for (let i = 0; i < clients.length; i++) {
             clients[i].ws.send(JSON.stringify({type: 'message', pseudo: 'Server', message: `${next_player.pseudo} begins his turn`}));

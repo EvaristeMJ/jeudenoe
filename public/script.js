@@ -2,6 +2,7 @@ const socket = new WebSocket('ws://localhost:3000');
 let active = false;
 let game = false;
 let pseudo = '';
+let id = ''
 
 socket.addEventListener('open', function (event) {
     //const pseudo = prompt('Enter your pseudonym:');

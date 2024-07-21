@@ -23,6 +23,7 @@ wss.on('connection', (ws) => {
             user = {
                 ws: ws,
                 pseudo: parsedMessage.pseudo,
+                id : Math.random().toString(36).substring(2,9),
                 ready: false,
                 alive: true,
                 left: null,

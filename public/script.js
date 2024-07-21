@@ -97,7 +97,7 @@ function displayUsers(users) {
             // display the number of charge attack by iterating a symbol for each charge
             const chargeAttackDiv = document.createElement('div');
             chargeAttackDiv.textContent = '';
-            for (let i = 0; i < user.charge_attack; i++){
+            for (let i = 0; i < user.ncharge; i++){
                 chargeAttackDiv.textContent += '⚡';
             }
             userDiv.appendChild(chargeAttackDiv);

@@ -1,10 +1,12 @@
 const socket = new WebSocket('ws://localhost:3000');
 let active = false;
 let game = false;
+let pseudo = '';
 
 socket.addEventListener('open', function (event) {
     //const pseudo = prompt('Enter your pseudonym:');
-    socket.send(JSON.stringify({ type: 'setPseudo', pseudo: Math.floor(5*Math.random()).toString(36) }));
+    pseudo = Math.floor(5*Math.random()).toString(36);
+    socket.send(JSON.stringify({ type: 'setPseudo', pseudo:  pseudo}));
 });
 
 socket.addEventListener('message', function (event) {
@@ -84,9 +86,11 @@ function displayUsers(users) {
             const lifeDiv = document.createElement('div');
             lifeDiv.textContent = `Life: ${user.life}`;
             userDiv.appendChild(lifeDiv);
+
             const defenseDiv = document.createElement('div');
             defenseDiv.textContent = `Defense: ${user.defense}`;
             userDiv.appendChild(defenseDiv);
+
             // display button to change defense points on each user
             const defenseButton = document.createElement('button');
             defenseButton.textContent = 'Change Defense';
@@ -94,6 +98,7 @@ function displayUsers(users) {
                 socket.send(JSON.stringify({ type: 'changeDefense', pseudo: user.pseudo }));
             });
             userDiv.appendChild(defenseButton);
+
             // display the number of charge attack by iterating a symbol for each charge
             const chargeAttackDiv = document.createElement('div');
             chargeAttackDiv.textContent = '';
@@ -101,6 +106,7 @@ function displayUsers(users) {
                 chargeAttackDiv.textContent += '⚡';
             }
             userDiv.appendChild(chargeAttackDiv);
+
             // display the number of charge defense
             const chargeDefenseDiv = document.createElement('div');
             chargeDefenseDiv.textContent = '';
@@ -108,16 +114,23 @@ function displayUsers(users) {
                 chargeDefenseDiv.textContent = '🛡️';
             }
             userDiv.appendChild(chargeDefenseDiv);
-            // button to charge attack
-            const chargeAttackButton = document.createElement('button');
-            chargeAttackButton.textContent = 'Charge Attack';
-            chargeAttackButton.addEventListener('click', chargeAttack);
-            userDiv.appendChild(chargeAttackButton);
-            // button to charge defense
-            const chargeDefenseButton = document.createElement('button');
-            chargeDefenseButton.textContent = 'Charge Defense';
-            chargeDefenseButton.addEventListener('click', ()=> chargeDefense(user.pseudo));
-            userDiv.appendChild(chargeDefenseButton);
+            
+            // display a button to attack right if the user is on the right
+
+            if (user.left === pseudo){
+                const attackRightButton = document.createElement('button');
+                attackRightButton.textContent = 'Attack';
+                attackRightButton.addEventListener('click', attackRight);
+                userDiv.appendChild(attackRightButton);
+            }
+            // display a button to attack left if the user is on the left
+            if (user.right === pseudo){
+                const attackLeftButton = document.createElement('button');
+                attackLeftButton.textContent = 'Attack';
+                attackLeftButton.addEventListener('click', attackLeft);
+                userDiv.appendChild(attackLeftButton);
+            }
+            
         }
 
         usersContainer.appendChild(userDiv);
@@ -144,13 +157,13 @@ function chargeAttack(){
         console.log('not active');
         return;
     }
-    socket.send(JSON.stringify({ type: 'chargeAttack' }));
+    socket.send(JSON.stringify({ type: 'chargeAttack'}));
 }
-function chargeDefense(target){
+function chargeDefense(){
     if (!active){
         console.log('not active');
         return;
     }
-    socket.send(JSON.stringify({ type: 'chargeDefense' , pseudo: target.pseudo}));
+    socket.send(JSON.stringify({ type: 'chargeDefense'}));
 }
 

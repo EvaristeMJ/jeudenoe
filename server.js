@@ -6,7 +6,6 @@ const WebSocket = require('ws');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
-
 let clients = [];
 
 wss.on('connection', (ws) => {
@@ -78,7 +77,6 @@ wss.on('connection', (ws) => {
             endTurn(user)
         }
         else if (parsedMessage.type === 'chargeDefense'){
-            target = clients.find(client => client.pseudo === parsedMessage.pseudo);
             handleChargeDefense(user);
             broadcastUserList();
             endTurn(user)
@@ -93,7 +91,7 @@ wss.on('connection', (ws) => {
             broadcastUserList();
             endTurn(user);
         }
-        else if (user) {
+        else if (parsedMessage.type === 'message') {
             console.log(`Received message from ${user.pseudo}: ${parsedMessage.message}`);
             clients.forEach((client) => {
                 if (client.ws !== ws && client.ws.readyState === WebSocket.OPEN) {
@@ -157,6 +155,8 @@ wss.on('connection', (ws) => {
         client.ws.send(JSON.stringify({type: 'endTurn'}));
         next_player = client.right;
         next_player.charge_defense = 0;
+        console.log('active player index:' + next_player.index)
+        active_player_index = (active_player_index + 1) % clients.length;
         broadcastUserList();
         for (let i = 0; i < clients.length; i++) {
             clients[i].ws.send(JSON.stringify({type: 'message', pseudo: 'Server', message: `${next_player.pseudo} begins his turn`}));
@@ -210,14 +210,23 @@ wss.on('connection', (ws) => {
     }
 
     function broadcastUserList() {
+
                 // send the list of users with their life points and their defense points to all clients
         const userList = clients.map(client => {
+                pseudo_right = '';
+                pseudo_left = '';
+                if(client.right != null){
+                    pseudo_right = client.right.pseudo;
+                    pseudo_left = client.left.pseudo;
+                }
                     return {
                         pseudo: client.pseudo,
                         life: client.life,
                         defense: client.defense,
                         ncharge: client.ncharge,
-                        has_charge_defense: client.charge_defense > 0
+                        has_charge_defense: client.charge_defense > 0,
+                        right: pseudo_right,
+                        left: pseudo_left
                     };
                 });
         clients.forEach((client) => {

@@ -159,7 +159,13 @@ wss.on('connection', (ws) => {
     }
 
     function randomInt(){
-        return Math.floor(Math.random() * 13)+1;
+        temp = [];
+        for (let i = 1; i <= 13; i++){
+            for (let j = 0; j < 4; j++){
+                temp.push(i);
+            }
+        }
+        return temp[Math.floor(Math.random() * temp.length)];
     }
     function randomLife(){
         return randomInt()+randomInt()+randomInt();
